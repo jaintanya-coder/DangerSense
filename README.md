@@ -1,148 +1,115 @@
 # DangerSense 🛡️
 
-### AI-Based Multi-Hazard CCTV Monitoring System
+### AI-Based Multi-Hazard CCTV Monitoring & Incident Response System
 
-DangerSense is a real-time computer vision system designed to turn passive CCTV footage into an intelligent safety monitoring system.
+DangerSense is a real-time computer vision system that turns passive CCTV footage into an intelligent safety monitoring system.
 
-Instead of requiring a person to continuously watch a camera feed, DangerSense analyzes the footage and identifies potentially dangerous events such as **fire, smoke, falls, and unauthorized entry into restricted areas**.
-
-The system verifies detected events across multiple consecutive frames before treating them as confirmed incidents, helping reduce false alerts caused by single-frame detections.
+It detects **fire, smoke, falls, person presence, and restricted-zone entry**, verifies events across multiple frames, and uses an **Incident Agent** for risk assessment and response decisions.
 
 ---
 
 ## 🚨 Problem Statement
 
-Traditional CCTV systems continuously record video, but they generally depend on a human operator to notice important events.
+Traditional CCTV systems rely on a person continuously watching the footage. This makes it difficult to notice incidents in homes, offices, businesses, storage areas, and restricted locations.
 
-This creates a problem in places such as:
-
-- Homes
-- Small businesses
-- Offices
-- Storage areas
-- Restricted rooms
-- Other locations where continuous monitoring is difficult
-
-DangerSense acts as an **AI monitoring layer over a CCTV camera** and brings potentially important events to the user's attention.
+DangerSense adds an AI monitoring layer that automatically detects, verifies, evaluates, and records potentially dangerous events.
 
 ---
 
 ## ✨ Features
 
-### 👤 Person Detection
-
-Detects people present in the camera frame using YOLO-based object detection.
-
-### 🔥 Fire Detection
-
-Detects visible fire using a custom-trained YOLO model.
-
-### 💨 Smoke Detection
-
-Detects smoke and distinguishes it from normal scene activity.
-
-### 🧍 Fall Detection
-
-Uses pose estimation and body-position analysis to identify potential falls.
-
-The system considers:
-
-- Body orientation
-- Shoulder and hip positions
-- Downward movement
-- Temporal persistence
-
-This helps distinguish potential falls from simple sitting or bending.
-
-### 🚧 Restricted Zone Detection
-
-A configurable region of the camera frame can be marked as a restricted area.
-
-If a detected person enters this area, the system generates a security incident.
-
-### ⏱️ Temporal Event Confirmation
-
-The system does not immediately treat every individual detection as a confirmed incident.
-
-An event must remain present across multiple consecutive frames before being confirmed.
-
-This reduces false alerts caused by temporary detection errors.
-
-### 📸 Evidence Capture
-
-When an incident is confirmed, DangerSense captures an image of the event.
-
-### 📋 Incident Logging
-
-Confirmed incidents are recorded with information such as:
-
-- Event type
-- Risk level
-- Reason
-- Timestamp
-- Evidence image
-
-### 📊 Monitoring Dashboard
-
-A Streamlit dashboard provides a simple interface for viewing the current monitoring status and recorded incidents.
-
-### ⛔ System Control
-
-The dashboard includes a stop control that signals the monitoring process to stop and closes the camera feed.
+- 👤 **Person Detection** — YOLO-based person detection.
+- 🔥 **Fire Detection** — Custom YOLO fire detection model.
+- 💨 **Smoke Detection** — Detects smoke as part of hazard assessment.
+- 🧍 **Fall Detection** — Pose-based analysis with temporal confirmation.
+- 🚧 **Restricted Zone Detection** — Detects people entering configurable areas.
+- ⏱️ **Temporal Confirmation** — Requires multiple consecutive frames before confirming an event.
+- 🤖 **Incident Agent** — Evaluates confirmed incidents and selects appropriate responses.
+- 🧠 **Risk Assessment** — Generates risk scores and severity levels.
+- 📸 **Evidence Capture** — Saves evidence images for confirmed incidents.
+- 📋 **Incident Logging** — Stores event, risk, reason, timestamp, and evidence.
+- 📊 **Streamlit Dashboard** — Displays live feed, status, risk, and incident history.
+- ⛔ **System Control** — Dashboard can stop the monitoring process.
 
 ---
 
 ## 🧠 System Architecture
 
 ```text
-                    CCTV / Camera
-                          │
-                          ▼
-                ┌──────────────────┐
-                │   Frame Capture  │
-                └────────┬─────────┘
-                         │
-                         ▼
-             ┌────────────────────────┐
-             │ Computer Vision Models │
-             ├────────────────────────┤
-             │ Person Detection       │
-             │ Fire Detection         │
-             │ Smoke Detection        │
-             │ Pose / Fall Detection  │
-             └───────────┬────────────┘
-                         │
-                         ▼
-                ┌──────────────────┐
-                │ Risk Assessment  │
-                └────────┬─────────┘
-                         │
-                         ▼
-             ┌────────────────────────┐
-             │ Temporal Confirmation  │
-             └───────────┬────────────┘
-                         │
-                  Confirmed Event
-                         │
-             ┌───────────┴───────────┐
-             ▼                       ▼
-      Evidence Capture         Event Logging
-             │                       │
-             └───────────┬───────────┘
-                         ▼
-                Streamlit Dashboard
+CCTV / Camera
+      ↓
+Frame Capture
+      ↓
+Computer Vision Detection
+      ↓
+Temporal Confirmation
+      ↓
+Incident Agent
+      ↓
+Risk Assessment
+      ↓
+Response Policy
+      ↓
+Action Executor
+   ┌──┴──────────────┐
+   ↓                 ↓
+Evidence          Event Log
+Capture
+   └────────┬────────┘
+            ↓
+     Streamlit Dashboard
 ```
+
+---
+
+## 🤖 Incident Agent
+
+The Incident Agent adds a decision-making layer after event confirmation.
+
+```text
+Confirmed Event
+      ↓
+Incident Classification
+      ↓
+Risk Factors
+      ↓
+Risk Score
+      ↓
+Severity
+      ↓
+Response Policy
+      ↓
+Selected Actions
+```
+
+Risk levels:
+
+```text
+80–100 → CRITICAL
+50–79  → HIGH
+25–49  → MEDIUM
+0–24   → LOW
+```
+
+Possible actions include:
+
+- `LOG_EVENT`
+- `CAPTURE_EVIDENCE`
+- `GENERATE_ALERT`
+- `CONTINUE_MONITORING`
+- `ESCALATE`
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Python**
-- **OpenCV**
-- **Ultralytics YOLO**
-- **YOLO Pose Estimation**
-- **NumPy**
-- **Streamlit**
+- Python
+- OpenCV
+- Ultralytics YOLO
+- YOLO Pose Estimation
+- NumPy
+- Streamlit
+- JSON
 
 ---
 
@@ -152,20 +119,23 @@ The dashboard includes a stop control that signals the monitoring process to sto
 DangerSense/
 │
 ├── alerts/
-│   ├── __init__.py
 │   ├── alert_manager.py
 │   └── event_logger.py
 │
+├── agent/
+│   ├── incident_agent.py
+│   ├── incident_state.py
+│   ├── incident_memory.py
+│   ├── response_policy.py
+│   └── action_executor.py
+│
 ├── client/
-│   ├── __init__.py
 │   └── dashboard.py
 │
 ├── config/
-│   ├── __init__.py
 │   └── settings.py
 │
 ├── detection/
-│   ├── __init__.py
 │   ├── person_detector.py
 │   ├── fire_detector.py
 │   ├── fall_detector.py
@@ -177,15 +147,11 @@ DangerSense/
 │   └── yolo11n-pose.pt
 │
 ├── monitoring/
-│   ├── __init__.py
 │   ├── event_tracker.py
 │   └── status_manager.py
 │
 ├── outputs/
-│   └── .gitkeep
-│
 ├── risk/
-│   ├── __init__.py
 │   └── risk_assessment.py
 │
 ├── .gitignore
@@ -198,30 +164,13 @@ DangerSense/
 
 ## ⚙️ Installation
 
-### 1. Clone the Repository
-
 ```bash
 git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd DangerSense
-```
 
-### 2. Create a Virtual Environment
-
-```bash
 python -m venv venv
-```
-
-### 3. Activate the Environment
-
-On Windows:
-
-```bash
 venv\Scripts\activate
-```
 
-### 4. Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
@@ -229,29 +178,31 @@ pip install -r requirements.txt
 
 ## ▶️ Running DangerSense
 
-DangerSense uses two processes: the **AI monitoring system** and the **Streamlit dashboard**.
+Run both commands from the **DangerSense project root**.
 
-### Terminal 1 — Start the AI Monitoring System
+### Terminal 1 — AI Monitoring
 
 ```bash
 python main.py
 ```
 
-This starts the camera and runs the computer vision pipeline.
-
-### Terminal 2 — Start the Dashboard
+### Terminal 2 — Dashboard
 
 ```bash
-streamlit run client/dashboard.py
+python -m streamlit run client/dashboard.py
 ```
 
-The Streamlit dashboard will open in the browser.
+Dashboard:
+
+```text
+http://localhost:8501
+```
 
 ---
 
-## 🎯 Configuring the Restricted Zone
+## 🎯 Configuration
 
-The restricted area can be configured from:
+Restricted-zone coordinates and detection settings can be configured in:
 
 ```text
 config/settings.py
@@ -264,83 +215,81 @@ ZONE_X1 = 20
 ZONE_Y1 = 30
 ZONE_X2 = 320
 ZONE_Y2 = 450
+
+CONFIRMATION_FRAMES = 8
 ```
 
-The coordinates can be adjusted according to the camera resolution and the desired restricted region.
+An event must persist for the configured number of consecutive frames before it becomes a confirmed incident.
 
 ---
 
-## ⏱️ Event Confirmation
+## 📸 Runtime Outputs
 
-DangerSense uses temporal confirmation instead of treating every individual model prediction as an incident.
-
-For example:
-
-```text
-Frame 1  → Possible event
-Frame 2  → Possible event
-Frame 3  → Possible event
-   ...
-Frame 8  → Confirmed event
-```
-
-Only after an event persists across the required number of consecutive frames is it treated as a confirmed incident.
-
-This helps reduce false alerts caused by temporary model predictions.
-
----
-
-## 📸 Evidence and Event Logs
-
-Runtime-generated files are stored in:
+Generated runtime data is stored inside:
 
 ```text
 outputs/
 ```
 
-These may include:
+This includes:
 
-- Incident screenshots
 - Latest processed frame
+- Incident screenshots
+- Current system status
 - Event logs
-- Runtime control files
+- Stop-control file
 
-Generated runtime data is excluded from version control using `.gitignore`.
+Runtime files are excluded from version control using `.gitignore`.
+
+---
+
+## 🎯 Example Use Cases
+
+### 🏠 Home Safety
+Detects potential falls or hazards when nobody is actively watching the camera.
+
+### 🔥 Fire Safety
+Detects fire/smoke and evaluates whether a person may be exposed to the hazard.
+
+### 🔐 Restricted Areas
+Detects unauthorized entry into configured sensitive areas.
 
 ---
 
 ## ⚠️ Limitations
 
-DangerSense is a student capstone prototype and is **not intended to replace professional security or fire-safety systems**.
+DangerSense is a **student capstone prototype** and is not intended to replace professional security or fire-safety systems.
 
-Potential limitations include:
+Limitations include:
 
-- Detection accuracy depends on camera quality and positioning.
-- Fire and smoke detection depends on the training data of the custom model.
-- Pose-based fall detection can be affected by camera angle, occlusion, and multiple people.
-- Restricted-zone detection is based on configured camera coordinates.
-- The system currently focuses on a controlled single-camera environment.
+- Accuracy depends on camera quality and positioning.
+- Fire/smoke detection depends on model training data.
+- Fall detection can be affected by camera angle and occlusion.
+- Restricted zones depend on configured coordinates.
+- Computer vision models can produce false positives or false negatives.
+- The current system focuses on a single-camera environment.
 
 ---
 
 ## 🔮 Future Improvements
 
-Possible future improvements include:
-
 - Multi-camera support
-- Person tracking across frames
+- Person tracking
 - Mobile push notifications
-- SMS / email alerts
-- More robust multi-person fall tracking
-- Cloud-based incident storage
-- Improved fire and smoke datasets
+- SMS/email alerts
+- Cloud incident storage
+- Improved fall detection
+- Larger fire/smoke datasets
 - Edge-device deployment
+- Advanced incident analytics
 
 ---
 
 ## 🎓 Project Type
 
-This project was developed as a **AI-ML cohort capstone project** focused on real-time safety monitoring.
+**AI-ML Cohort Capstone Project**
+
+Focused on real-time computer vision, safety monitoring, risk assessment, and agent-assisted incident response.
 
 ---
 
