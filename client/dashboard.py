@@ -3,12 +3,17 @@ import json
 import os
 import time
 import numpy as np
+import cv2
+
 
 # CONFIGURATION
 
 FRAME_PATH = "outputs/latest_frame.jpg"
+
 STATUS_PATH = "outputs/current_status.json"
+
 EVENT_LOG_PATH = "outputs/logs/events.json"
+
 STOP_FILE = "outputs/stop.flag"
 
 
@@ -29,7 +34,9 @@ def load_status():
     """
 
     if not os.path.exists(STATUS_PATH):
+
         return None
+
 
     try:
 
@@ -40,7 +47,11 @@ def load_status():
 
             return json.load(file)
 
-    except (json.JSONDecodeError, FileNotFoundError):
+
+    except (
+        json.JSONDecodeError,
+        FileNotFoundError
+    ):
 
         return None
 
@@ -51,7 +62,9 @@ def load_events():
     """
 
     if not os.path.exists(EVENT_LOG_PATH):
+
         return []
+
 
     try:
 
@@ -62,9 +75,34 @@ def load_events():
 
             return json.load(file)
 
-    except (json.JSONDecodeError, FileNotFoundError):
+
+    except (
+        json.JSONDecodeError,
+        FileNotFoundError
+    ):
 
         return []
+
+
+def get_risk_icon(risk_level):
+
+    if risk_level == "CRITICAL":
+
+        return "🔴"
+
+    if risk_level == "HIGH":
+
+        return "🟠"
+
+    if risk_level == "MEDIUM":
+
+        return "🟡"
+
+    if risk_level == "LOW":
+
+        return "🟢"
+
+    return "🔵"
 
 
 # HEADER
@@ -74,6 +112,7 @@ st.title("🛡️ DangerSense")
 st.caption(
     "AI-Powered CCTV Safety Monitoring System"
 )
+
 
 # SYSTEM CONTROL
 
@@ -85,6 +124,7 @@ system_stopped = (
     or
     os.path.exists(STOP_FILE)
 )
+
 
 st.subheader("System Control")
 
@@ -99,6 +139,7 @@ if st.button(
         exist_ok=True
     )
 
+
     with open(
         STOP_FILE,
         "w"
@@ -107,7 +148,9 @@ if st.button(
         file.write("STOP")
 
 
-    st.session_state["system_stopped"] = True
+    st.session_state[
+        "system_stopped"
+    ] = True
 
 
 # LOAD DATA
@@ -115,6 +158,16 @@ if st.button(
 status_data = load_status()
 
 events = load_events()
+
+
+# GET LATEST AGENT INCIDENT
+
+latest_event = None
+
+
+if events:
+
+    latest_event = events[-1]
 
 
 # MAIN DASHBOARD
@@ -133,16 +186,17 @@ with camera_column:
 
     if system_stopped:
 
-        # Create a completely black frame
         black_frame = np.zeros(
             (480, 640, 3),
             dtype=np.uint8
         )
 
+
         st.image(
             black_frame,
             width="stretch"
         )
+
 
         st.error(
             "⛔ DangerSense has been stopped."
@@ -151,10 +205,34 @@ with camera_column:
 
     elif os.path.exists(FRAME_PATH):
 
-        st.image(
-            FRAME_PATH,
-            width="stretch"
-        )
+        try:
+
+            # Read the image safely before displaying it
+            frame = cv2.imread(FRAME_PATH)
+
+            if frame is None:
+
+                st.warning(
+                    "Camera frame is temporarily unavailable..."
+                )
+
+            else:
+
+                frame = cv2.cvtColor(
+                    frame,
+                    cv2.COLOR_BGR2RGB
+            )
+
+            st.image(
+                frame,
+                width="stretch"
+            )
+
+        except Exception:
+
+            st.warning(
+                "Camera frame is being updated. Retrying..."
+            )
 
 
     else:
@@ -163,17 +241,20 @@ with camera_column:
             "Waiting for camera feed..."
         )
 
+
 # CURRENT STATUS
 
 with status_column:
 
     st.subheader("Current Status")
 
+
     if status_data is None:
 
         st.info(
             "⏳ Starting DangerSense..."
         )
+
 
     else:
 
@@ -182,10 +263,12 @@ with status_column:
             "UNKNOWN"
         )
 
+
         event_name = status_data.get(
             "event",
             "UNKNOWN"
         )
+
 
         reason = status_data.get(
             "reason",
@@ -193,7 +276,9 @@ with status_column:
         )
 
 
-        # Status indicator
+        # ----------------------------------------------------
+        # STATUS INDICATOR
+        # ----------------------------------------------------
 
         if risk_level == "CRITICAL":
 
@@ -201,11 +286,13 @@ with status_column:
                 "🔴 CRITICAL"
             )
 
+
         elif risk_level == "HIGH":
 
             st.warning(
                 "🟠 HIGH RISK"
             )
+
 
         elif risk_level == "MEDIUM":
 
@@ -213,11 +300,13 @@ with status_column:
                 "🟡 MEDIUM RISK"
             )
 
+
         elif risk_level == "SAFE":
 
             st.success(
                 "🟢 SAFE"
             )
+
 
         else:
 
@@ -230,42 +319,300 @@ with status_column:
             f"**Event:** {event_name}"
         )
 
+
         st.write(
             f"**Risk Level:** {risk_level}"
         )
+
 
         st.write(
             f"**Reason:** {reason}"
         )
 
 
+# AGENTIC INCIDENT INTELLIGENCE
+
+st.divider()
+
+st.subheader(
+    "🤖 Incident Agent Intelligence"
+)
+
+
+if latest_event is None:
+
+    st.info(
+        "The Incident Agent is waiting for a confirmed incident."
+    )
+
+
+else:
+
+    agent_incident_type = latest_event.get(
+        "incident_type"
+    )
+
+
+    agent_risk_score = latest_event.get(
+        "risk_score"
+    )
+
+
+    agent_severity = latest_event.get(
+        "agent_severity",
+        latest_event.get(
+            "risk_level",
+            "UNKNOWN"
+        )
+    )
+
+
+    incident_id = latest_event.get(
+        "incident_id",
+        "Not available"
+    )
+
+
+    risk_factors = latest_event.get(
+        "risk_factors",
+        []
+    )
+
+
+    agent_actions = latest_event.get(
+        "agent_actions",
+        []
+    )
+
+
+    agent_message = latest_event.get(
+        "agent_message",
+        "No agent decision available."
+    )
+
+
+    # --------------------------------------------------------
+    # AGENT SUMMARY CARDS
+    # --------------------------------------------------------
+
+    col1, col2, col3, col4 = st.columns(4)
+
+
+    with col1:
+
+        st.metric(
+            "Incident ID",
+            incident_id
+        )
+
+
+    with col2:
+
+        st.metric(
+            "Incident Type",
+            agent_incident_type
+            or "UNKNOWN"
+        )
+
+
+    with col3:
+
+        if agent_risk_score is not None:
+
+            st.metric(
+                "Agent Risk Score",
+                f"{agent_risk_score}/100"
+            )
+
+        else:
+
+            st.metric(
+                "Agent Risk Score",
+                "N/A"
+            )
+
+
+    with col4:
+
+        st.metric(
+            "Agent Severity",
+            f"{get_risk_icon(agent_severity)} "
+            f"{agent_severity}"
+        )
+
+
+    # --------------------------------------------------------
+    # AGENT DECISION
+    # --------------------------------------------------------
+
+    st.write("### 🧠 Agent Decision")
+
+
+    st.info(
+        agent_message
+    )
+
+
+    # --------------------------------------------------------
+    # RISK FACTORS + ACTIONS
+    # --------------------------------------------------------
+
+    factor_column, action_column = st.columns(2)
+
+
+    with factor_column:
+
+        st.write(
+            "#### ⚠️ Risk Factors"
+        )
+
+
+        if risk_factors:
+
+            for factor in risk_factors:
+
+                st.write(
+                    f"• {factor.replace('_', ' ').title()}"
+                )
+
+        else:
+
+            st.caption(
+                "No risk factors recorded."
+            )
+
+
+    with action_column:
+
+        st.write(
+            "#### ⚙️ Agent Actions"
+        )
+
+
+        if agent_actions:
+
+            for action in agent_actions:
+
+                st.write(
+                    f"• {action.replace('_', ' ').title()}"
+                )
+
+        else:
+
+            st.caption(
+                "No actions recorded."
+            )
+
+
+# LATEST EVIDENCE
+
+if latest_event is not None:
+
+    screenshot = latest_event.get(
+        "screenshot"
+    )
+
+
+    if screenshot and os.path.exists(
+        screenshot
+    ):
+
+        st.divider()
+
+        st.subheader(
+            "📸 Latest Incident Evidence"
+        )
+
+
+        evidence_column, details_column = st.columns(
+            [2, 1]
+        )
+
+
+        with evidence_column:
+
+            st.image(
+                screenshot,
+                width="stretch"
+            )
+
+
+        with details_column:
+
+            st.write(
+                "**Incident:**"
+            )
+
+            st.write(
+                latest_event.get(
+                    "event",
+                    "Unknown"
+                )
+            )
+
+
+            st.write(
+                "**Detected At:**"
+            )
+
+            st.write(
+                latest_event.get(
+                    "timestamp",
+                    "Unknown"
+                )
+            )
+
+
+            st.write(
+                "**Reason:**"
+            )
+
+            st.write(
+                latest_event.get(
+                    "reason",
+                    "No reason recorded."
+                )
+            )
+
+
 # EVENT HISTORY
 
 st.divider()
 
-st.subheader("📋 Confirmed Incident History")
+st.subheader(
+    "📋 Confirmed Incident History"
+)
 
 
 if events:
 
     recent_events = events[-10:]
 
-    for event in reversed(recent_events):
+
+    for event in reversed(
+        recent_events
+    ):
 
         risk_level = event.get(
-            "risk_level",
-            "UNKNOWN"
+            "agent_severity",
+            event.get(
+                "risk_level",
+                "UNKNOWN"
+            )
         )
+
 
         event_name = event.get(
             "event",
             "UNKNOWN"
         )
 
+
         timestamp = event.get(
             "timestamp",
             "Unknown time"
         )
+
 
         reason = event.get(
             "reason",
@@ -273,39 +620,125 @@ if events:
         )
 
 
-        # Select indicator
-        if risk_level == "CRITICAL":
-
-            icon = "🔴"
-
-        elif risk_level == "HIGH":
-
-            icon = "🟠"
-
-        elif risk_level == "MEDIUM":
-
-            icon = "🟡"
-
-        else:
-
-            icon = "🟢"
-
-
-        st.write(
-            f"{icon} **{event_name}** "
-            f"— {risk_level} "
-            f"— {timestamp}"
+        incident_type = event.get(
+            "incident_type",
+            event_name
         )
 
-        st.caption(
-            reason
+
+        risk_score = event.get(
+            "risk_score"
         )
+
+
+        icon = get_risk_icon(
+            risk_level
+        )
+
+
+        # ----------------------------------------------------
+        # INCIDENT EXPANDER
+        # ----------------------------------------------------
+
+        with st.expander(
+            f"{icon} {incident_type} — "
+            f"{risk_level} — {timestamp}"
+        ):
+
+            st.write(
+                f"**Event:** {event_name}"
+            )
+
+
+            st.write(
+                f"**Reason:** {reason}"
+            )
+
+
+            if risk_score is not None:
+
+                st.write(
+                    f"**Agent Risk Score:** "
+                    f"{risk_score}/100"
+                )
+
+
+            if event.get(
+                "incident_id"
+            ):
+
+                st.write(
+                    f"**Incident ID:** "
+                    f"{event['incident_id']}"
+                )
+
+
+            if event.get(
+                "risk_factors"
+            ):
+
+                st.write(
+                    "**Risk Factors:**"
+                )
+
+                for factor in event[
+                    "risk_factors"
+                ]:
+
+                    st.write(
+                        f"• "
+                        f"{factor.replace('_', ' ').title()}"
+                    )
+
+
+            if event.get(
+                "agent_actions"
+            ):
+
+                st.write(
+                    "**Agent Actions:**"
+                )
+
+                for action in event[
+                    "agent_actions"
+                ]:
+
+                    st.write(
+                        f"• "
+                        f"{action.replace('_', ' ').title()}"
+                    )
+
+
+            screenshot = event.get(
+                "screenshot"
+            )
+
+
+            if screenshot and os.path.exists(
+                screenshot
+            ):
+
+                st.image(
+                    screenshot,
+                    width="stretch"
+                )
+
 
 else:
 
     st.info(
         "No confirmed incidents yet."
     )
+
+
+# SYSTEM FOOTER
+
+st.divider()
+
+st.caption(
+    "DangerSense • Computer Vision + "
+    "Temporal Verification + Incident Agent"
+)
 
 
 # AUTO REFRESH
